@@ -246,7 +246,7 @@ class KernelSpecManager(LoggingConfigurable):
 
     def _check_parameterized_kernel(self, kspec: KernelSpec) -> KernelSpec:
         is_secure = self.check_kernel_is_secure(kspec=kspec)
-        if is_secure == True:
+        if is_secure is True:
             if kspec.metadata and isinstance(kspec.metadata, dict):
                 kspec.metadata.update({"is_secure": True})
             else:
@@ -259,12 +259,12 @@ class KernelSpecManager(LoggingConfigurable):
             else:
                 kspec.metadata = {}
                 kspec.metadata.update({"is_secure": False})
-            if self._allow_insecure_kernelspec_params == True:
+            if self._allow_insecure_kernelspec_params is True:
                 return kspec  # a kernel spec is allowed
             else:
                 kspec_data = self.check_kernel_custom_all_default_values(kspec=kspec)
 
-                if kspec_data["all_have_default"] == True:
+                if kspec_data["all_have_default"] is True:
                     return kspec_data["kspec"]  # a kernel spec is modyfied and is allowed
                 else:
                     return None
@@ -328,7 +328,6 @@ class KernelSpecManager(LoggingConfigurable):
                         else:
                             is_secure = False
                     elif property_value.get("type") == "array":
-                        print("Type of JSON Schema data is array and it is not supported now")
                         is_secure = False
                     elif property_value.get("enum"):
                         counter_secure_kernel_variables = counter_secure_kernel_variables + 1
@@ -337,7 +336,7 @@ class KernelSpecManager(LoggingConfigurable):
                             obj=obj, counter_secure_kernel_variables=counter_secure_kernel_variables
                         )
 
-        if is_secure == False:
+        if is_secure is False:
             counter_secure_kernel_variables = 0
 
         return counter_secure_kernel_variables
@@ -362,10 +361,7 @@ class KernelSpecManager(LoggingConfigurable):
         if match is None:
             pattern = re.compile(r"\{([A-Za-z0-9_]+)\}")
             matches = pattern.findall(string)
-            if len(matches) > 0:
-                return True
-            else:
-                return False
+            return len(matches) > 0
         else:
             return False
 
@@ -384,13 +380,13 @@ class KernelSpecManager(LoggingConfigurable):
             new_kspec = {}
             for property_key, property_value in propetries:
                 if "default" in property_value:
-                    new_kspec = self.replaceByDefault(
+                    new_kspec = self.replace_by_default(
                         kspec, property_key, property_value["default"]
                     )
                 else:
                     has_default = False
 
-            if has_default == False:
+            if has_default is False:
                 result = {"kspec": kspec, "all_have_default": False}
             else:
                 # check if there is anything after replacing
@@ -409,7 +405,7 @@ class KernelSpecManager(LoggingConfigurable):
         pattern = re.compile(regexp)
         return pattern.sub(value, spec)
 
-    def replaceByDefault(self, kspec, kernel_variable, default_value):
+    def replace_by_default(self, kspec, kernel_variable, default_value):
         new_env = {}
         new_argv = []
         if hasattr(kspec, "env"):
@@ -528,7 +524,7 @@ class KernelSpecManager(LoggingConfigurable):
                     # which may have overridden find_kernel_specs
                     # and get_kernel_spec, but not the newer get_all_specs
                     spec = self.get_kernel_spec(kname)
-                if spec != None:
+                if spec is not None:
                     res[kname] = {"resource_dir": resource_dir, "spec": spec.to_dict()}
             except NoSuchKernel:
                 pass  # The appropriate warning has already been logged

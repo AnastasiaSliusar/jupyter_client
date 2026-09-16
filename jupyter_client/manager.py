@@ -388,7 +388,7 @@ class KernelManager(ConnectionFileMixin):
                 saved_env = self._launch_args.get("env", {})
                 custom_kernel_dict = self._launch_args["custom_kernel_specs"]
                 if isinstance(custom_kernel_dict, dict):
-                    for key, value in custom_kernel_dict.items():
+                    for key, _value in custom_kernel_dict.items():
                         if key in saved_env and key not in env:
                             env[key] = saved_env[key]
 

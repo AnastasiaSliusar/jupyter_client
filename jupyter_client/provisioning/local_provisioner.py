@@ -257,7 +257,6 @@ class LocalProvisioner(KernelProvisionerBase):
             kernel_cmd = self.kernel_spec.argv + extra_arguments
 
         kernel_cmd = km.clear_custom_kernel_parameters(kernel_cmd)
-        print("cmd--------", kernel_cmd)
 
         kwargs.pop("custom_kernel_specs", None)
         return await super().pre_launch(cmd=kernel_cmd, **kwargs)
