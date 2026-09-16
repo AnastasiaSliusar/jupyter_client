@@ -318,7 +318,7 @@ class KernelSpecManager(LoggingConfigurable):
         if "properties" in obj:
             propetries = obj["properties"].items()
             if len(propetries) > 0:
-                for property_key, property_value in propetries:
+                for _property_key, property_value in propetries:
                     if (
                         property_value.get("type") == "string"
                         or property_value.get("type") == "null"
@@ -349,7 +349,7 @@ class KernelSpecManager(LoggingConfigurable):
                 if is_variable:
                     sum = sum + 1
         elif isinstance(parameters, dict):
-            for env_key, env_item in parameters.items():
+            for _env_key, env_item in parameters.items():
                 is_variable = self.has_variable(env_item)
                 if is_variable:
                     sum = sum + 1
