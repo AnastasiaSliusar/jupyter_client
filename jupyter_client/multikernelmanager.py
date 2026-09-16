@@ -289,8 +289,13 @@ class MultiKernelManager(LoggingConfigurable):
                 isinstance(custom_kernel_specs, dict) and len(custom_kernel_specs) == 0
             ):
                 del kwargs["custom_kernel_specs"]
-        
-        if hasattr(self, "_launch_args") and self._launch_args and "custom_kernel_specs" in self._launch_args and "custom_kernel_specs" not in kwargs:
+
+        if (
+            hasattr(self, "_launch_args")
+            and self._launch_args
+            and "custom_kernel_specs" in self._launch_args
+            and "custom_kernel_specs" not in kwargs
+        ):
             del self._launch_args["custom_kernel_specs"]
 
         kwargs = self.validate_kernel_parameters(kwargs)
