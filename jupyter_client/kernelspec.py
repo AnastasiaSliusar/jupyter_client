@@ -265,7 +265,7 @@ class KernelSpecManager(LoggingConfigurable):
                 kspec_data = self.check_kernel_custom_all_default_values(kspec=kspec)
 
                 if kspec_data["all_have_default"] is True:
-                    return kspec_data["kspec"]  # a kernel spec is modyfied and is allowed
+                    return kspec_data["kspec"]  # a kernel spec is modified and is allowed
                 else:
                     return None
 
