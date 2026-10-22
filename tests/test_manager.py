@@ -37,7 +37,6 @@ def test_connection_file_real_path():
         cmds = km.format_kernel_cmd()
         assert cmds[4] == "foobar"
 
-
 def test_env_update_launch_args_not_set():
     km = KernelManager()
     km.update_env(env={"A": "A"})
@@ -117,3 +116,125 @@ def test_required_transport_encryption_needs_kernelspec_feature():
 
     with pytest.raises(RuntimeError, match="supported_encryption"):
         asyncio.run(km._async_pre_start_kernel())
+
+
+def test_default_custom_parameters_spec():
+    """Verify realpath is used when formatting connection file"""
+        km = KernelManager(
+            kernel_name="test_kernel",
+        )
+
+        # KernelSpec and launch args have to be mocked as we don't have an actual kernel on disk
+        km._kernel_spec = KernelSpec(
+            resource_dir="test",
+            **{
+                "argv": ["python.exe", "-m", "test_kernel", "-f", "{custom_param}"],
+                "env": {},
+                "display_name": "test_kernel",
+                "language": "python",
+                "metadata": {
+                    "debugger": False,
+                    "parameters": {
+                        "title": "Select this parameter for this kernel",
+                        "type": "object",
+                        "properties": {
+                            "custom_param": {
+                                "title": "Select parameter",
+                                "type": "string",
+                                "default": "--raw",
+                                "enum": [
+                                    "--raw",
+                                    ""
+                                ],
+                                "save": True
+                            }
+                        }
+                    }
+                },
+            },
+        )
+        km.get_default_custom_kernel_specs_value()
+        km._launch_args = {}
+        cmds = km.format_kernel_cmd()
+        assert cmds[4] == "--raw"
+
+def test_custom_parameters_spec():
+    """Verify realpath is used when formatting connection file"""
+        km = KernelManager(
+            kernel_name="test_kernel",
+        )
+
+        # KernelSpec and launch args have to be mocked as we don't have an actual kernel on disk
+        km._kernel_spec = KernelSpec(
+            resource_dir="test",
+            **{
+                "argv": ["python.exe", "-m", "test_kernel", "-f", "{custom_param}"],
+                "env": {},
+                "display_name": "test_kernel",
+                "language": "python",
+                "metadata": {
+                    "debugger": False,
+                    "parameters": {
+                        "title": "Select this parameter for this kernel",
+                        "type": "object",
+                        "properties": {
+                            "custom_param": {
+                                "title": "Select parameter",
+                                "type": "string",
+                                "default": "--raw",
+                                "enum": [
+                                    "--raw",
+                                    ""
+                                ],
+                                "save": True
+                            }
+                        }
+                    }
+                },
+            },
+        )
+        km.get_default_custom_kernel_specs_value()
+        km._launch_args = {"custom_kernel_specs": {"custom_param":""}}
+        cmds = km.format_kernel_cmd()
+        assert cmds[4] == ""
+
+def test_clean_custom_parameters_spec():
+    """Verify realpath is used when formatting connection file"""
+        km = KernelManager(
+            kernel_name="test_kernel",
+        )
+
+        # KernelSpec and launch args have to be mocked as we don't have an actual kernel on disk
+        km._kernel_spec = KernelSpec(
+            resource_dir="test",
+            **{
+                "argv": ["python.exe", "-m", "test_kernel", "-f", "{custom_param2}"],
+                "env": {},
+                "display_name": "test_kernel",
+                "language": "python",
+                "metadata": {
+                    "debugger": False,
+                    "parameters": {
+                        "title": "Select this parameter for this kernel",
+                        "type": "object",
+                        "properties": {
+                            "custom_param": {
+                                "title": "Select parameter",
+                                "type": "string",
+                                "default": "--raw",
+                                "enum": [
+                                    "--raw",
+                                    ""
+                                ],
+                                "save": True
+                            }
+                        }
+                    }
+                },
+            },
+        )
+        km.get_default_custom_kernel_specs_value()
+        km._launch_args = {"custom_kernel_specs": {"custom_param":""}}
+        cmds = km.format_kernel_cmd()
+        assert len(cmds) == 4
+
