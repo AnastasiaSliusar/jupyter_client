@@ -255,7 +255,7 @@ class LocalProvisioner(KernelProvisionerBase):
         else:
             extra_arguments = kwargs.pop("extra_arguments", [])
             kernel_cmd = self.kernel_spec.argv + extra_arguments
-#
+        #
         kernel_cmd = km.clear_custom_kernel_parameters(kernel_cmd)
 
         kwargs.pop("custom_kernel_specs", None)

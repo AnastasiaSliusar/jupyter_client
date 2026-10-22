@@ -237,4 +237,3 @@ def test_clean_custom_parameters_spec():
         km._launch_args = {"custom_kernel_specs": {"custom_param":""}}
         cmds = km.format_kernel_cmd()
         assert len(cmds) == 4
-
