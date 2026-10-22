@@ -445,8 +445,8 @@ class KernelManager(ConnectionFileMixin):
         return isMatch
 
     # Clear kernel specs files if user has not configured them themselves
-    # we should return only that has not kernel custom variables
-    # if there are no metadata specification for custom kernel
+    # we should return only that does not have kernel custom variables
+    # if there is no metadata specification for custom kernel
 
     def clear_custom_kernel_parameters(self, kernel_parameters: t.Any) -> t.Any:
         clean_parameters = None
