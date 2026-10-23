@@ -1,5 +1,4 @@
 
-# jupyter_client/parameterized.py
 
 from __future__ import annotations
 
@@ -47,7 +46,7 @@ class ParameterizedKernelSpec:
 
 
     def get_argv_env_kernel_variables(self, kspec: t.Any) -> int:
-    """Returns the total count of custom kernel variables parameters in argv and env."""
+        """Returns the total count of custom kernel variables parameters in argv and env."""
         total_variables_count = 0
 
         for value in getattr(kspec, "argv", None) or []:
@@ -139,7 +138,7 @@ class ParameterizedKernelSpec:
         properties = self._parameter_properties(kspec)
         if not isinstance(properties, dict):
             # check if there are kernel variables even metadata.parameters are empty
-             if total_sum_kernel_variables > 0:
+            if total_sum_kernel_variables > 0:
                 is_secure = False
             else:
                 is_secure = True
