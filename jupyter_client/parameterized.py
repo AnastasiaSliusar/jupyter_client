@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 import copy
@@ -28,22 +26,15 @@ class ParameterizedKernelSpec:
             if isinstance(definition, dict) and "default" in definition
         }
 
-
     def find_parameters(self, value: t.Any) -> set[str]:
         """Find custom kernel variables."""
         if not isinstance(value, str):
             return set()
 
-        return {
-            name
-            for name in _PLACEHOLDER.findall(value)
-            if name != _CONNECTION_FILE
-        }
-
+        return {name for name in _PLACEHOLDER.findall(value) if name != _CONNECTION_FILE}
 
     def has_custom_parameter(self, value: t.Any) -> bool:
         return bool(self.find_parameters(value))
-
 
     def get_argv_env_kernel_variables(self, kspec: t.Any) -> int:
         """Returns the total count of custom kernel variables parameters in argv and env."""
@@ -56,8 +47,6 @@ class ParameterizedKernelSpec:
 
         return total_variables_count
 
-
-
     def substitute_parameters(
         self,
         value: str,
@@ -66,34 +55,24 @@ class ParameterizedKernelSpec:
         """Substitute only values that were explicitly resolved."""
         return _PLACEHOLDER.sub(
             lambda match: (
-                str(values[match.group(1)])
-                if match.group(1) in values
-                else match.group(0)
+                str(values[match.group(1)]) if match.group(1) in values else match.group(0)
             ),
             value,
         )
-
 
     def format_kernel_cmd(
         self,
         cmd: list[str],
         values: dict[str, t.Any],
     ) -> list[str]:
-        return [
-            self.substitute_parameters(arg, values)
-            for arg in cmd
-        ]
-
+        return [self.substitute_parameters(arg, values) for arg in cmd]
 
     def format_kernel_env(
         self,
         env: dict[str, str],
         values: dict[str, t.Any],
     ) -> dict[str, str]:
-        return {
-            key: self.substitute_parameters(value, values)
-            for key, value in env.items()
-        }
+        return {key: self.substitute_parameters(value, values) for key, value in env.items()}
 
     def _parameter_properties(kspec: t.Any) -> dict[str, t.Any]:
         metadata = getattr(kspec, "metadata", None) or {}
@@ -101,9 +80,9 @@ class ParameterizedKernelSpec:
         properties = parameters.get("properties", {})
         return properties if isinstance(properties, dict) else {}
 
-    def get_count_secure_kernel_variables(self,
-        obj: dict[str, t.Any],
-        counter_secure_kernel_variables: int = 0)-> int:
+    def get_count_secure_kernel_variables(
+        self, obj: dict[str, t.Any], counter_secure_kernel_variables: int = 0
+    ) -> int:
         is_secure = True
         if "properties" in obj:
             propetries = obj["properties"].items()
@@ -155,7 +134,6 @@ class ParameterizedKernelSpec:
                 is_secure = False
         return is_secure
 
-
     def replace_by_default(
         self,
         kspec: t.Any,
@@ -177,8 +155,7 @@ class ParameterizedKernelSpec:
 
         return result
 
-
-    def check_kernel_custom_all_default_values(self, kspec:KernelSpec):
+    def check_kernel_custom_all_default_values(self, kspec: KernelSpec):
         assert kernel_spec is not None
         properties = self._parameter_properties(kspec)
         if isinstance(properties, dict):
@@ -207,7 +184,6 @@ class ParameterizedKernelSpec:
             result = {"kspec": kspec, "all_have_default": False}
         return result
 
-
     def check_parameterized_kernel(
         self,
         kspec: t.Any,
@@ -227,9 +203,7 @@ class ParameterizedKernelSpec:
         fallback = self.check_kernel_custom_all_default_values(result)
         if fallback["all_have_default"]:
             fallback_spec = fallback["kspec"]
-            fallback_metadata = dict(
-                getattr(fallback_spec, "metadata", None) or {}
-            )
+            fallback_metadata = dict(getattr(fallback_spec, "metadata", None) or {})
             fallback_metadata["is_secure"] = False
             fallback_spec.metadata = fallback_metadata
             return fallback_spec
@@ -250,7 +224,6 @@ class ParameterizedKernelSpec:
             custom_kernel_dict = self.custom_kernel_default_value
         return custom_kernel_dict
 
-
     def clear_custom_kernel_parameters(self, kernel_parameters: t.Any) -> t.Any:
         """
         Safely removes unresolved custom placeholders from lists or dicts.
@@ -258,12 +231,12 @@ class ParameterizedKernelSpec:
         """
         if isinstance(kernel_parameters, list):
             clean_parameters = [
-                item for item in kernel_parameters
-                if not self.has_custom_parameter(item)
+                item for item in kernel_parameters if not self.has_custom_parameter(item)
             ]
         elif isinstance(kernel_parameters, dict):
             clean_parameters = {
-                key: value for key, value in kernel_parameters.items()
+                key: value
+                for key, value in kernel_parameters.items()
                 if not self.has_custom_parameter(value)
             }
         else:
@@ -277,18 +250,11 @@ class ParameterizedKernelSpec:
 
         return clean_parameters
 
-
-    def update_custom_env_parameters(self, launch_args, custom_kernel_default_value, env: t.Dict[str, str]) -> t.Dict[str, str]:
-        custom_kernel_dict = self.get_custom_kernel_spec_value(launch_args, custom_kernel_default_value)
+    def update_custom_env_parameters(
+        self, launch_args, custom_kernel_default_value, env: t.Dict[str, str]
+    ) -> t.Dict[str, str]:
+        custom_kernel_dict = self.get_custom_kernel_spec_value(
+            launch_args, custom_kernel_default_value
+        )
         newEnv = self.format_kernel_env(env, custom_kernel_dict)
         return self.clear_custom_kernel_parameters(newEnv)
-
-
-
-
-
-
-
-
-
-

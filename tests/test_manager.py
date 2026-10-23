@@ -37,6 +37,7 @@ def test_connection_file_real_path():
         cmds = km.format_kernel_cmd()
         assert cmds[4] == "foobar"
 
+
 def test_env_update_launch_args_not_set():
     km = KernelManager()
     km.update_env(env={"A": "A"})
