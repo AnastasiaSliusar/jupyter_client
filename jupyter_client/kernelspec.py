@@ -15,8 +15,8 @@ from jupyter_core.paths import SYSTEM_JUPYTER_PATH, jupyter_data_dir, jupyter_pa
 from traitlets import Bool, CaselessStrEnum, Dict, HasTraits, List, Set, Type, Unicode, observe
 from traitlets.config import LoggingConfigurable
 
-from .provisioning import KernelProvisionerFactory as KPF  # noqa
 from .parameterized import ParameterizedKernelSpec
+from .provisioning import KernelProvisionerFactory as KPF  # noqa
 
 pjoin = os.path.join
 
@@ -244,7 +244,7 @@ class KernelSpecManager(LoggingConfigurable):
 
     def allow_insecure_kernelspec_params(self, allow_insecure_kernelspec_params):
         self._allow_insecure_kernelspec_params = allow_insecure_kernelspec_params
-    
+
     def _get_kernel_spec_by_name(self, kernel_name: str, resource_dir: str) -> KernelSpec:
         """Returns a :class:`KernelSpec` instance for a given kernel_name
         and resource_dir.
@@ -266,7 +266,9 @@ class KernelSpecManager(LoggingConfigurable):
         if not KPF.instance(parent=self.parent).is_provisioner_available(kspec):
             raise NoSuchKernel(kernel_name)
 
-        kspec = ParameterizedKernelSpec.check_parameterized_kernel(kspec, self._allow_insecure_kernelspec_params)
+        kspec = ParameterizedKernelSpec.check_parameterized_kernel(
+            kspec, self._allow_insecure_kernelspec_params
+        )
 
         if kspec is not None:
             return kspec

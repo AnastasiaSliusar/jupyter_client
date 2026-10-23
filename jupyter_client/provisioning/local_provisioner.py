@@ -14,8 +14,8 @@ import zmq
 from ..connect import KernelConnectionInfo, LocalPortCache
 from ..launcher import launch_kernel
 from ..localinterfaces import is_local_ip, local_ips
-from .provisioner_base import KernelProvisionerBase
 from .parameterized import ParameterizedKernelSpec
+from .provisioner_base import KernelProvisionerBase
 
 
 class LocalProvisioner(KernelProvisionerBase):

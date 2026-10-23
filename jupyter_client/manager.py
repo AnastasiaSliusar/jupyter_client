@@ -42,10 +42,9 @@ from .blocking import BlockingKernelClient
 from .client import KernelClient
 from .connect import ConnectionFileMixin
 from .managerabc import KernelManagerABC
+from .parameterized import ParameterizedKernelSpec
 from .provisioning import KernelProvisionerBase
 from .provisioning import KernelProvisionerFactory as KPF  # noqa
-from .parameterized import ParameterizedKernelSpec
-
 
 # After an upgrade to Sphinx 9 and myst 5, the doc build started to fail
 # with the following error: :8: (ERROR/3) Unexpected indentation.
@@ -395,13 +394,17 @@ class KernelManager(ConnectionFileMixin):
                             env[key] = saved_env[key]
 
             # check whether env has custom kernel spec variables
-            env = ParameterizedKernelSpec.update_custom_env_parameters(self._launch_args, self.custom_kernel_default_value, env=env)
+            env = ParameterizedKernelSpec.update_custom_env_parameters(
+                self._launch_args, self.custom_kernel_default_value, env=env
+            )
 
             self._launch_args["env"].update(env)  # type: ignore [unreachable]
 
     def set_default_custom_kernel_specs_value(self):
         assert self.kernel_spec is not None
-        self.custom_kernel_default_value = ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
+        self.custom_kernel_default_value = (
+            ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
+        )
 
     def format_kernel_cmd(self, extra_arguments: t.List[str] | None = None) -> t.List[str]:
         """Replace templated args (e.g. {connection_file})"""
@@ -432,8 +435,10 @@ class KernelManager(ConnectionFileMixin):
         }
 
         # Updating ns if there are custom kernel specs variables
-        custom_kernel_dict = ParameterizedKernelSpec.get_custom_kernel_spec_value(self._launch_args, self.custom_kernel_default_value)
-        
+        custom_kernel_dict = ParameterizedKernelSpec.get_custom_kernel_spec_value(
+            self._launch_args, self.custom_kernel_default_value
+        )
+
         if isinstance(custom_kernel_dict, dict) and len(custom_kernel_dict) > 0:
             for custom_kernel_spec_key, custom_kernel_spec_value in custom_kernel_dict.items():
                 ns[custom_kernel_spec_key] = custom_kernel_spec_value
@@ -520,7 +525,9 @@ class KernelManager(ConnectionFileMixin):
         kw = await self.provisioner.pre_launch(**kw)
         # update env
         if "env" in kw:
-            kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(self._launch_args, self.custom_kernel_default_value, env=kw["env"])
+            kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(
+                self._launch_args, self.custom_kernel_default_value, env=kw["env"]
+            )
             self._launch_args["env"].update(kw["env"])
         kernel_cmd = kw.pop("cmd")
         if "custom_kernel_specs" in kw:

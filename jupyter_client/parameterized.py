@@ -41,7 +41,7 @@ class ParameterizedKernelSpec:
             if name != _CONNECTION_FILE
         }
 
-    
+
     def has_custom_parameter(self, value: t.Any) -> bool:
         return bool(self.find_parameters(value))
 
@@ -57,8 +57,8 @@ class ParameterizedKernelSpec:
 
         return total_variables_count
 
- 
-    
+
+
     def substitute_parameters(
         self,
         value: str,
@@ -74,7 +74,7 @@ class ParameterizedKernelSpec:
             value,
         )
 
-    
+
     def format_kernel_cmd(
         self,
         cmd: list[str],
@@ -85,7 +85,7 @@ class ParameterizedKernelSpec:
             for arg in cmd
         ]
 
-    
+
     def format_kernel_env(
         self,
         env: dict[str, str],
@@ -101,7 +101,7 @@ class ParameterizedKernelSpec:
         parameters = metadata.get("parameters", {})
         properties = parameters.get("properties", {})
         return properties if isinstance(properties, dict) else {}
-        
+
     def get_count_secure_kernel_variables(self,
         obj: dict[str, t.Any],
         counter_secure_kernel_variables: int = 0)-> int:
@@ -131,7 +131,7 @@ class ParameterizedKernelSpec:
             counter_secure_kernel_variables = 0
 
         return counter_secure_kernel_variables
-        
+
     def check_kernel_is_secure(self, kspec: t.Any) -> bool:
         is_secure = False
         total_sum_kernel_variables = self.get_argv_env_kernel_variables(kspec)
@@ -156,7 +156,7 @@ class ParameterizedKernelSpec:
                 is_secure = False
         return is_secure
 
-    
+
     def replace_by_default(
         self,
         kspec: t.Any,
@@ -178,7 +178,7 @@ class ParameterizedKernelSpec:
 
         return result
 
-    
+
     def check_kernel_custom_all_default_values(self, kspec:KernelSpec):
         assert kernel_spec is not None
         properties = self._parameter_properties(kspec)
@@ -208,7 +208,7 @@ class ParameterizedKernelSpec:
             result = {"kspec": kspec, "all_have_default": False}
         return result
 
-    
+
     def check_parameterized_kernel(
         self,
         kspec: t.Any,
@@ -288,8 +288,8 @@ class ParameterizedKernelSpec:
 
 
 
-    
-    
 
 
- 
+
+
+
