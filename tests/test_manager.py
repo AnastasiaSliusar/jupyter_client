@@ -153,7 +153,7 @@ def test_default_custom_parameters_spec():
                 },
             },
         )
-        km.get_default_custom_kernel_specs_value()
+        km.set_default_custom_kernel_specs_value()
         km._launch_args = {}
         cmds = km.format_kernel_cmd()
         assert cmds[4] == "--raw"
@@ -193,7 +193,7 @@ def test_custom_parameters_spec():
                 },
             },
         )
-        km.get_default_custom_kernel_specs_value()
+        km.set_default_custom_kernel_specs_value()
         km._launch_args = {"custom_kernel_specs": {"custom_param":""}}
         cmds = km.format_kernel_cmd()
         assert cmds[4] == ""
@@ -233,7 +233,7 @@ def test_clean_custom_parameters_spec():
                 },
             },
         )
-        km.get_default_custom_kernel_specs_value()
+        km.set_default_custom_kernel_specs_value()
         km._launch_args = {"custom_kernel_specs": {"custom_param":""}}
         cmds = km.format_kernel_cmd()
         assert len(cmds) == 4

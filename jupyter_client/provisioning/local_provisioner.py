@@ -15,6 +15,7 @@ from ..connect import KernelConnectionInfo, LocalPortCache
 from ..launcher import launch_kernel
 from ..localinterfaces import is_local_ip, local_ips
 from .provisioner_base import KernelProvisionerBase
+from .parameterized import ParameterizedKernelSpec
 
 
 class LocalProvisioner(KernelProvisionerBase):
@@ -177,7 +178,7 @@ class LocalProvisioner(KernelProvisionerBase):
         km = self.parent
         if km:
             # Get default values from kernel.json file if there is a custom kernel
-            km.get_default_custom_kernel_specs_value()
+            km.set_default_custom_kernel_specs_value()
 
             transport_encryption = kwargs.pop(
                 "transport_encryption", getattr(km, "transport_encryption", "disabled")
@@ -255,8 +256,8 @@ class LocalProvisioner(KernelProvisionerBase):
         else:
             extra_arguments = kwargs.pop("extra_arguments", [])
             kernel_cmd = self.kernel_spec.argv + extra_arguments
-        #
-        kernel_cmd = km.clear_custom_kernel_parameters(kernel_cmd)
+
+        kernel_cmd = ParameterizedKernelSpec.clear_custom_kernel_parameters(kernel_cmd)
 
         kwargs.pop("custom_kernel_specs", None)
         return await super().pre_launch(cmd=kernel_cmd, **kwargs)
