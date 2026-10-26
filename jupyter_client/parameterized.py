@@ -45,22 +45,17 @@ class ParameterizedKernelSpec:
         return bool(cls.find_parameters(value))
 
     @classmethod
-    def get_argv_env_kernel_variable_names(cls, kspec):
-        """Get custom kernel variables for args and envs."""
-        names = set()
-
-        for value in getattr(kspec, "argv", None) or []:
-            names.update(cls.find_parameters(value))
-
-        for value in (getattr(kspec, "env", None) or {}).values():
-            names.update(cls.find_parameters(value))
-
-        return names
-
-    @classmethod
     def get_argv_env_kernel_variables(cls, kspec: kernelspec.KernelSpec) -> int:
         """Count total custom kernel variables for args and envs together."""
-        return len(cls.get_argv_env_kernel_variable_names(kspec))
+        total = 0
+
+        for value in getattr(kspec, "argv", None) or []:
+            total +=len(cls.find_parameters(value))
+
+        for value in (getattr(kspec, "env", None) or {}).values():
+            total +=len(cls.find_parameters(value))
+
+        return total
 
     @staticmethod
     def substitute_parameters(
@@ -315,4 +310,4 @@ class ParameterizedKernelSpec:
 
         custom_kernel_dict = cls.get_custom_kernel_spec_value(kwargs, custom_kernel_default_value)
         newArgs = cls.format_kernel_cmd(cmd, custom_kernel_dict)
-        return newArgs
+        return cls.clear_custom_kernel_parameters(newArgs)

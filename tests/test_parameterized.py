@@ -7,8 +7,8 @@ import copy
 
 import pytest
 
-from ..jupyter_client.kernelspec import KernelSpec
-from ..jupyter_client.parameterized import ParameterizedKernelSpec as P
+from jupyter_client.kernelspec import KernelSpec
+from jupyter_client.parameterized import ParameterizedKernelSpec as P
 
 
 def make_spec(argv=None, env=None, metadata=None):
