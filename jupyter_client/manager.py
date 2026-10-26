@@ -402,9 +402,7 @@ class KernelManager(ConnectionFileMixin):
 
     def set_default_custom_kernel_specs_value(self):
         assert self.kernel_spec is not None
-        self.custom_kernel_default_value = (
-            ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
-        )
+        self.custom_kernel_default_value =  ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
 
     def format_kernel_cmd(self, extra_arguments: t.List[str] | None = None) -> t.List[str]:
         """Replace templated args (e.g. {connection_file})"""
@@ -463,7 +461,6 @@ class KernelManager(ConnectionFileMixin):
         Note that provisioners can now be used to customize kernel environments
         and
         """
-        #
         assert self.provisioner is not None
         connection_info = await self.provisioner.launch_kernel(kernel_cmd, **kw)
         assert self.provisioner.has_process
@@ -566,7 +563,6 @@ class KernelManager(ConnectionFileMixin):
              and launching the kernel (e.g. Popen kwargs).
         """
         self._attempted_start = True
-
         kernel_cmd, kw = await self._async_pre_start_kernel(**kw)
 
         # launch the kernel subprocess
@@ -684,6 +680,7 @@ class KernelManager(ConnectionFileMixin):
             # the kernel a chance to properly execute shutdown actions. Wait for at
             # most 1s, checking every 0.1s.
             await self._async_finish_shutdown(restart=restart)
+
         await self._async_cleanup_resources(restart=restart)
 
     shutdown_kernel = run_sync(_async_shutdown_kernel)
@@ -727,7 +724,6 @@ class KernelManager(ConnectionFileMixin):
 
         # Start new kernel.
         self._launch_args.update(kw)
-
         await self._async_start_kernel(**self._launch_args)
 
     restart_kernel = run_sync(_async_restart_kernel)

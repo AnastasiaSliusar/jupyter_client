@@ -231,7 +231,6 @@ class MultiKernelManager(LoggingConfigurable):
     async def _add_kernel_when_ready(
         self, kernel_id: str, km: KernelManager, kernel_awaitable: t.Awaitable
     ) -> None:
-        #
         try:
             await kernel_awaitable
             self._kernels[kernel_id] = km

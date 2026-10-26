@@ -122,7 +122,7 @@ class CustomTestProvisioner(KernelProvisionerBase):  # type:ignore
             kernel_cmd = km.format_kernel_cmd(
                 extra_arguments=extra_arguments
             )  # This needs to remain here for b/c
-            # do not forget
+
             return await super().pre_launch(cmd=kernel_cmd, **kwargs)
         return {}
 
