@@ -50,10 +50,10 @@ class ParameterizedKernelSpec:
         total = 0
 
         for value in getattr(kspec, "argv", None) or []:
-            total +=len(cls.find_parameters(value))
+            total += len(cls.find_parameters(value))
 
         for value in (getattr(kspec, "env", None) or {}).values():
-            total +=len(cls.find_parameters(value))
+            total += len(cls.find_parameters(value))
 
         return total
 

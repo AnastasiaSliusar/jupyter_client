@@ -108,6 +108,7 @@ def test_count_is_zero_when_no_custom_parameters():
 
     assert P.get_argv_env_kernel_variables(spec) == 0
 
+
 def test_substitute_resolved_parameters_only():
     assert (
         P.substitute_parameters(
@@ -152,6 +153,7 @@ def test_parameter_properties_handles_missing_metadata():
     spec = make_spec(metadata={})
 
     assert P._parameter_properties(spec) == {}
+
 
 def test_replace_by_default_updates_argv_and_env():
     spec = make_spec(
@@ -218,6 +220,7 @@ def test_kernel_without_parameter_metadata_is_insecure_with_placeholder():
     )
 
     assert P.check_kernel_is_secure(spec) is False
+
 
 def test_kernel_with_matching_enum_parameter_is_secure():
     spec = make_spec(
