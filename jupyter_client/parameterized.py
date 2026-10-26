@@ -13,6 +13,7 @@ _CONNECTION_FILE = "connection_file"
 class ParameterizedKernelSpec:
     """Shared helpers for parameterized kernelspecs."""
 
+    @classmethod
     def get_default_custom_kernel_specs_value(cls, kspec: t.Any) -> dict[str, t.Any]:
         """Get default values of custom kernel specs."""
 
@@ -32,11 +33,7 @@ class ParameterizedKernelSpec:
         if not isinstance(value, str):
             return set()
 
-        return {
-            name
-            for name in _PLACEHOLDER.findall(value)
-            if name != _CONNECTION_FILE
-        }
+        return {name for name in _PLACEHOLDER.findall(value) if name != _CONNECTION_FILE}
 
     @classmethod
     def has_custom_parameter(cls, value: t.Any) -> bool:
@@ -53,7 +50,6 @@ class ParameterizedKernelSpec:
             total_variables_count += len(cls.find_parameters(value))
 
         return total_variables_count
-
 
     @staticmethod
     def substitute_parameters(
@@ -74,10 +70,7 @@ class ParameterizedKernelSpec:
         cmd: list[str],
         values: dict[str, t.Any],
     ) -> list[str]:
-        return [
-            cls.substitute_parameters(arg, values)
-            for arg in cmd
-        ]
+        return [cls.substitute_parameters(arg, values) for arg in cmd]
 
     @classmethod
     def format_kernel_env(
@@ -85,22 +78,19 @@ class ParameterizedKernelSpec:
         env: dict[str, str],
         values: dict[str, t.Any],
     ) -> dict[str, str]:
-        return {
-            key: cls.substitute_parameters(value, values)
-            for key, value in env.items()
-        }
-    
+        return {key: cls.substitute_parameters(value, values) for key, value in env.items()}
+
     @staticmethod
     def _parameter_properties(kspec: t.Any) -> dict[str, t.Any]:
         metadata = getattr(kspec, "metadata", None) or {}
         parameters = metadata.get("parameters", {})
         properties = parameters.get("properties", {})
         return properties if isinstance(properties, dict) else {}
-    
+
     @classmethod
-    def get_count_secure_kernel_variables(cls,
-        obj: dict[str, t.Any],
-        counter_secure_kernel_variables: int = 0)-> int:
+    def get_count_secure_kernel_variables(
+        cls, obj: dict[str, t.Any], counter_secure_kernel_variables: int = 0
+    ) -> int:
         is_secure = True
         if "properties" in obj:
             propetries = obj["properties"].items()
@@ -176,7 +166,7 @@ class ParameterizedKernelSpec:
         return result
 
     @classmethod
-    def check_kernel_custom_all_default_values(cls, kspec:KernelSpec):
+    def check_kernel_custom_all_default_values(cls, kspec: KernelSpec):
         assert kspec is not None
         properties = cls._parameter_properties(kspec)
         if isinstance(properties, dict):
@@ -255,12 +245,12 @@ class ParameterizedKernelSpec:
         """
         if isinstance(kernel_parameters, list):
             clean_parameters = [
-                item for item in kernel_parameters
-                if not cls.has_custom_parameter(item)
+                item for item in kernel_parameters if not cls.has_custom_parameter(item)
             ]
         elif isinstance(kernel_parameters, dict):
             clean_parameters = {
-                key: value for key, value in kernel_parameters.items()
+                key: value
+                for key, value in kernel_parameters.items()
                 if not cls.has_custom_parameter(value)
             }
         else:
@@ -275,7 +265,11 @@ class ParameterizedKernelSpec:
         return clean_parameters
 
     @classmethod
-    def update_custom_env_parameters(cls, launch_args, custom_kernel_default_value, env: t.Dict[str, str]) -> t.Dict[str, str]:
-        custom_kernel_dict = cls.get_custom_kernel_spec_value(launch_args, custom_kernel_default_value)
+    def update_custom_env_parameters(
+        cls, launch_args, custom_kernel_default_value, env: t.Dict[str, str]
+    ) -> t.Dict[str, str]:
+        custom_kernel_dict = cls.get_custom_kernel_spec_value(
+            launch_args, custom_kernel_default_value
+        )
         newEnv = cls.format_kernel_env(env, custom_kernel_dict)
         return cls.clear_custom_kernel_parameters(newEnv)
