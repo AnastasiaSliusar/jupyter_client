@@ -256,7 +256,9 @@ class LocalProvisioner(KernelProvisionerBase):
         else:
             extra_arguments = kwargs.pop("extra_arguments", [])
             kernel_cmd = self.kernel_spec.argv + extra_arguments
-            kernel_cmd = ParameterizedKernelSpec.update_custom_arg_parameters(self.kernel_spec,kernel_cmd, kwargs)
+            kernel_cmd = ParameterizedKernelSpec.update_custom_arg_parameters(
+                self.kernel_spec, kernel_cmd, kwargs
+            )
 
         kernel_cmd = ParameterizedKernelSpec.clear_custom_kernel_parameters(kernel_cmd)
 

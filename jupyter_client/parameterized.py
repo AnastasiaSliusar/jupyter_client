@@ -17,7 +17,9 @@ class ParameterizedKernelSpec:
     """Shared helpers for parameterized kernelspecs."""
 
     @classmethod
-    def get_default_custom_kernel_specs_value(cls, kspec: kernelspec.KernelSpec) -> dict[str, t.Any]:
+    def get_default_custom_kernel_specs_value(
+        cls, kspec: kernelspec.KernelSpec
+    ) -> dict[str, t.Any]:
         """Get default values of custom kernel specs."""
 
         properties = cls._parameter_properties(kspec)
@@ -41,7 +43,6 @@ class ParameterizedKernelSpec:
     @classmethod
     def has_custom_parameter(cls, value: t.Any) -> bool:
         return bool(cls.find_parameters(value))
-    
 
     @classmethod
     def get_argv_env_kernel_variable_names(cls, kspec):
@@ -174,7 +175,7 @@ class ParameterizedKernelSpec:
         return result
 
     @classmethod
-    def check_kernel_custom_all_default_values(cls, kspec:kernelspec.KernelSpec):
+    def check_kernel_custom_all_default_values(cls, kspec: kernelspec.KernelSpec):
         assert kspec is not None
         properties = cls._parameter_properties(kspec)
         if properties:
@@ -231,12 +232,16 @@ class ParameterizedKernelSpec:
             return None
 
     @classmethod
-    def get_custom_kernel_spec_value(cls, launch_args:t.Dict[str, t.Any], custom_kernel_default_value: dict[str, t.Any]):
+    def get_custom_kernel_spec_value(
+        cls, launch_args: t.Dict[str, t.Any], custom_kernel_default_value: dict[str, t.Any]
+    ):
         custom_kernel_dict = {}
         if "custom_kernel_specs" in launch_args:
             custom_kernel_specs = launch_args["custom_kernel_specs"]
-            custom_kernel_dict = custom_kernel_specs.copy() if isinstance(custom_kernel_specs, dict) else {}
-            
+            custom_kernel_dict = (
+                custom_kernel_specs.copy() if isinstance(custom_kernel_specs, dict) else {}
+            )
+
             # check is custom kernel variables are full if not then we should take default ones
             if custom_kernel_default_value:
                 for key, value in custom_kernel_default_value.items():
@@ -255,7 +260,9 @@ class ParameterizedKernelSpec:
         """
         if isinstance(kernel_parameters, list):
             clean_parameters = [
-                item for item in kernel_parameters if item != "" and not cls.has_custom_parameter(item)
+                item
+                for item in kernel_parameters
+                if item != "" and not cls.has_custom_parameter(item)
             ]
 
             return clean_parameters if clean_parameters else kernel_parameters
@@ -268,17 +275,19 @@ class ParameterizedKernelSpec:
 
             return clean_parameters if clean_parameters else kernel_parameters
         else:
-             if isinstance(kernel_parameters, str):
+            if isinstance(kernel_parameters, str):
                 if kernel_parameters == "" or cls.has_custom_parameter(kernel_parameters):
                     return ""
                 return kernel_parameters
-        
-        
+
         return kernel_parameters
-    
+
     @classmethod
     def update_custom_env_parameters(
-        cls, launch_args:t.Dict[str, t.Any], custom_kernel_default_value:dict[str, t.Any], env: t.Dict[str, str]
+        cls,
+        launch_args: t.Dict[str, t.Any],
+        custom_kernel_default_value: dict[str, t.Any],
+        env: t.Dict[str, str],
     ) -> t.Dict[str, str]:
         custom_kernel_dict = cls.get_custom_kernel_spec_value(
             launch_args, custom_kernel_default_value
@@ -291,9 +300,7 @@ class ParameterizedKernelSpec:
         cls, kpecs, cmd: t.List[t.Any], kwargs: t.Dict[str, t.Any]
     ) -> t.List[t.Any]:
         custom_kernel_default_value = cls.get_default_custom_kernel_specs_value(kpecs)
-        
-        custom_kernel_dict = cls.get_custom_kernel_spec_value(
-            kwargs, custom_kernel_default_value
-        )
+
+        custom_kernel_dict = cls.get_custom_kernel_spec_value(kwargs, custom_kernel_default_value)
         newArgs = cls.format_kernel_cmd(cmd, custom_kernel_dict)
         return newArgs

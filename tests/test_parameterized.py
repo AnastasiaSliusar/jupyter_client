@@ -4,11 +4,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 import copy
-from unittest import mock 
 
-from ..jupyter_client.kernelspec import KernelSpec
 import pytest
 
+from ..jupyter_client.kernelspec import KernelSpec
 from ..jupyter_client.parameterized import ParameterizedKernelSpec as P
 
 
@@ -20,22 +19,25 @@ def make_spec(argv=None, env=None, metadata=None):
             "display_name": "test_kernel",
             "language": "python",
         },
-    ) 
+    )
     spec.argv = argv or []
     spec.env = env or {}
     spec.metadata = metadata or {}
     return spec
 
+
 def test_get_defaults_returns_declared_defaults():
-    spec = make_spec(metadata={
-        "parameters": {
-            "properties": {
-                "host": {"type": "string", "default": "localhost"},
-                "port": {"type": "integer", "default": 8888},
-                "token": {"type": "string"},
+    spec = make_spec(
+        metadata={
+            "parameters": {
+                "properties": {
+                    "host": {"type": "string", "default": "localhost"},
+                    "port": {"type": "integer", "default": 8888},
+                    "token": {"type": "string"},
+                }
             }
         }
-    })
+    )
 
     assert P.get_default_custom_kernel_specs_value(spec) == {
         "host": "localhost",
@@ -44,24 +46,22 @@ def test_get_defaults_returns_declared_defaults():
 
 
 def test_get_defaults_returns_empty_when_no_properties():
-    assert P.get_default_custom_kernel_specs_value(
-        make_spec()
-    ) == {}
+    assert P.get_default_custom_kernel_specs_value(make_spec()) == {}
 
 
 def test_get_defaults_ignores_non_dict_definitions():
-    spec = make_spec(metadata={
-        "parameters": {
-            "properties": {
-                "host": "invalid",
-                "port": {"default": 8888},
+    spec = make_spec(
+        metadata={
+            "parameters": {
+                "properties": {
+                    "host": "invalid",
+                    "port": {"default": 8888},
+                }
             }
         }
-    })
+    )
 
-    assert P.get_default_custom_kernel_specs_value(spec) == {
-        "port": 8888
-    }
+    assert P.get_default_custom_kernel_specs_value(spec) == {"port": 8888}
 
 
 @pytest.mark.parametrize(
@@ -93,6 +93,7 @@ def test_find_parameters(value, expected):
 def test_has_custom_parameter(value, expected):
     assert P.has_custom_parameter(value) is expected
 
+
 def test_counts_unique_parameters_per_argument_and_env_value():
     spec = make_spec(
         argv=["python", "--host={host}-{host}", "--port={port}"],
@@ -113,11 +114,15 @@ def test_count_is_zero_when_no_custom_parameters():
 # substitute_parameters / format methods
 # --------------------------------------------------
 
+
 def test_substitute_resolved_parameters_only():
-    assert P.substitute_parameters(
-        "--host={host}, --port={port}",
-        {"host": "localhost"},
-    ) == "--host=localhost, --port={port}"
+    assert (
+        P.substitute_parameters(
+            "--host={host}, --port={port}",
+            {"host": "localhost"},
+        )
+        == "--host=localhost, --port={port}"
+    )
 
 
 def test_substitute_converts_values_to_strings():
@@ -139,21 +144,13 @@ def test_format_kernel_env():
 
 
 def test_parameter_properties_returns_properties():
-    spec = make_spec(metadata={
-        "parameters": {
-            "properties": {"host": {"type": "string"}}
-        }
-    })
+    spec = make_spec(metadata={"parameters": {"properties": {"host": {"type": "string"}}}})
 
-    assert P._parameter_properties(spec) == {
-        "host": {"type": "string"}
-    }
+    assert P._parameter_properties(spec) == {"host": {"type": "string"}}
 
 
 def test_parameter_properties_handles_invalid_properties():
-    spec = make_spec(metadata={
-        "parameters": {"properties": ["host"]}
-    })
+    spec = make_spec(metadata={"parameters": {"properties": ["host"]}})
 
     assert P._parameter_properties(spec) == {}
 
@@ -168,6 +165,7 @@ def test_parameter_properties_handles_missing_metadata():
 # replace_by_default
 # --------------------------------------------------
 
+
 def test_replace_by_default_updates_argv_and_env():
     spec = make_spec(
         argv=["python", "--host={host}", "--port={port}"],
@@ -178,15 +176,12 @@ def test_replace_by_default_updates_argv_and_env():
 
     result = P.replace_by_default(spec, "host", "localhost")
 
-    assert result.argv == [
-        "python", "--host=localhost", "--port={port}"
-    ]
-    assert result.env == {
-        "HOST": "localhost", "PORT": "{port}"
-    }
+    assert result.argv == ["python", "--host=localhost", "--port={port}"]
+    assert result.env == {"HOST": "localhost", "PORT": "{port}"}
     assert spec.argv == original_argv
     assert spec.env == original_env
     assert result is not spec
+
 
 def test_count_secure_string_enum():
     obj = {
@@ -202,39 +197,26 @@ def test_count_secure_string_enum():
 
 
 def test_count_secure_null_enum():
-    obj = {
-        "properties": {
-            "token": {"type": "null", "enum": [None]}
-        }
-    }
+    obj = {"properties": {"token": {"type": "null", "enum": [None]}}}
 
     assert P.get_count_secure_kernel_variables(obj) == 1
 
 
 def test_unrestricted_string_is_not_secure():
-    obj = {
-        "properties": {
-            "host": {"type": "string"}
-        }
-    }
+    obj = {"properties": {"host": {"type": "string"}}}
 
     assert P.get_count_secure_kernel_variables(obj) == 0
 
 
 def test_array_property_is_not_secure():
-    obj = {
-        "properties": {
-            "args": {"type": "array", "enum": [["a", "b"]]}
-        }
-    }
+    obj = {"properties": {"args": {"type": "array", "enum": [["a", "b"]]}}}
 
     assert P.get_count_secure_kernel_variables(obj) == 0
 
 
 def test_empty_properties_return_zero():
-    assert P.get_count_secure_kernel_variables(
-        {"properties": {}}
-    ) == 0
+    assert P.get_count_secure_kernel_variables({"properties": {}}) == 0
+
 
 def test_kernel_without_parameters_and_placeholders_is_secure():
     spec = make_spec(argv=["python"], metadata={})
@@ -272,13 +254,7 @@ def test_kernel_with_matching_enum_parameter_is_secure():
 def test_kernel_with_unrestricted_string_parameter_is_insecure():
     spec = make_spec(
         argv=["python", "--host={host}"],
-        metadata={
-            "parameters": {
-                "properties": {
-                    "host": {"type": "string"}
-                }
-            }
-        },
+        metadata={"parameters": {"properties": {"host": {"type": "string"}}}},
     )
 
     assert P.check_kernel_is_secure(spec) is False
@@ -300,6 +276,7 @@ def test_kernel_with_metadata_but_no_placeholders_is_insecure():
     )
 
     assert P.check_kernel_is_secure(spec) is False
+
 
 def test_all_defaults_resolve_all_placeholders():
     spec = make_spec(
@@ -327,13 +304,7 @@ def test_all_defaults_resolve_all_placeholders():
 def test_missing_default_makes_all_defaults_false():
     spec = make_spec(
         argv=["python", "--host={host}"],
-        metadata={
-            "parameters": {
-                "properties": {
-                    "host": {"type": "string"}
-                }
-            }
-        },
+        metadata={"parameters": {"properties": {"host": {"type": "string"}}}},
     )
 
     result = P.check_kernel_custom_all_default_values(spec)
@@ -349,6 +320,7 @@ def test_no_parameter_properties_returns_false():
     assert result["all_have_default"] is False
     assert result["kspec"] is spec
 
+
 def test_secure_kernel_is_returned_with_security_metadata():
     spec = make_spec(argv=["python"], metadata={})
 
@@ -361,13 +333,7 @@ def test_secure_kernel_is_returned_with_security_metadata():
 def test_insecure_kernel_is_rejected_without_defaults():
     spec = make_spec(
         argv=["python", "--host={host}"],
-        metadata={
-            "parameters": {
-                "properties": {
-                    "host": {"type": "string"}
-                }
-            }
-        },
+        metadata={"parameters": {"properties": {"host": {"type": "string"}}}},
     )
 
     assert P.check_parameterized_kernel(spec) is None
@@ -376,18 +342,10 @@ def test_insecure_kernel_is_rejected_without_defaults():
 def test_allow_insecure_kernel_returns_spec():
     spec = make_spec(
         argv=["python", "--host={host}"],
-        metadata={
-            "parameters": {
-                "properties": {
-                    "host": {"type": "string"}
-                }
-            }
-        },
+        metadata={"parameters": {"properties": {"host": {"type": "string"}}}},
     )
 
-    result = P.check_parameterized_kernel(
-        spec, allow_insecure_kernelspec_params=True
-    )
+    result = P.check_parameterized_kernel(spec, allow_insecure_kernelspec_params=True)
 
     assert result is not None
     assert result.metadata["is_secure"] is False
@@ -414,6 +372,7 @@ def test_insecure_kernel_with_all_defaults_uses_fallback():
     assert result.argv == ["python", "--host=localhost"]
     assert result.metadata["is_secure"] is False
 
+
 def test_custom_values_override_defaults():
     result = P.get_custom_kernel_spec_value(
         {"custom_kernel_specs": {"host": "remote"}},
@@ -424,9 +383,7 @@ def test_custom_values_override_defaults():
 
 
 def test_defaults_used_when_custom_values_are_absent():
-    assert P.get_custom_kernel_spec_value(
-        {}, {"host": "localhost"}
-    ) == {"host": "localhost"}
+    assert P.get_custom_kernel_spec_value({}, {"host": "localhost"}) == {"host": "localhost"}
 
 
 def test_invalid_custom_values_type_uses_defaults():
@@ -439,10 +396,12 @@ def test_invalid_custom_values_type_uses_defaults():
 def test_no_custom_values_or_defaults_returns_empty_dict():
     assert P.get_custom_kernel_spec_value({}, {}) == {}
 
+
 def test_clear_list_removes_empty_and_unresolved_items():
-    assert P.clear_custom_kernel_parameters(
-        ["python", "", "--host={host}", "--debug"]
-    ) == ["python", "--debug"]
+    assert P.clear_custom_kernel_parameters(["python", "", "--host={host}", "--debug"]) == [
+        "python",
+        "--debug",
+    ]
 
 
 def test_clear_list_preserves_original_if_result_empty():
@@ -452,11 +411,13 @@ def test_clear_list_preserves_original_if_result_empty():
 
 
 def test_clear_dict_removes_empty_and_unresolved_values():
-    assert P.clear_custom_kernel_parameters({
-        "HOST": "localhost",
-        "PORT": "{port}",
-        "EMPTY": "",
-    }) == {"HOST": "localhost"}
+    assert P.clear_custom_kernel_parameters(
+        {
+            "HOST": "localhost",
+            "PORT": "{port}",
+            "EMPTY": "",
+        }
+    ) == {"HOST": "localhost"}
 
 
 def test_clear_dict_preserves_original_if_result_empty():
@@ -477,6 +438,7 @@ def test_clear_dict_preserves_original_if_result_empty():
 )
 def test_clear_scalar_values(value, expected):
     assert P.clear_custom_kernel_parameters(value) == expected
+
 
 def test_update_custom_env_parameters_uses_user_values_and_defaults():
     env = {
@@ -500,9 +462,7 @@ def test_update_custom_env_parameters_uses_user_values_and_defaults():
 
 
 def test_update_custom_env_parameters_with_no_values():
-    result = P.update_custom_env_parameters(
-        {}, {}, {"STATIC": "unchanged", "HOST": "{host}"}
-    )
+    result = P.update_custom_env_parameters({}, {}, {"STATIC": "unchanged", "HOST": "{host}"})
 
     assert result == {"STATIC": "unchanged"}
 
@@ -532,16 +492,12 @@ def test_update_custom_arg_parameters_uses_defaults_and_custom_values():
         {"custom_kernel_specs": {"host": "remote"}},
     )
 
-    assert result == [
-        "python", "--host=remote", "--port=8888"
-    ]
+    assert result == ["python", "--host=remote", "--port=8888"]
 
 
 def test_update_custom_arg_parameters_with_no_parameters():
     spec = make_spec(argv=["python"], metadata={})
 
-    result = P.update_custom_arg_parameters(
-        spec, ["python", "--version"], {}
-    )
+    result = P.update_custom_arg_parameters(spec, ["python", "--version"], {})
 
     assert result == ["python", "--version"]
