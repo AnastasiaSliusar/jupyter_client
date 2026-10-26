@@ -402,7 +402,9 @@ class KernelManager(ConnectionFileMixin):
 
     def set_default_custom_kernel_specs_value(self):
         assert self.kernel_spec is not None
-        self.custom_kernel_default_value =  ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
+        self.custom_kernel_default_value = (
+            ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
+        )
 
     def format_kernel_cmd(self, extra_arguments: t.List[str] | None = None) -> t.List[str]:
         """Replace templated args (e.g. {connection_file})"""
