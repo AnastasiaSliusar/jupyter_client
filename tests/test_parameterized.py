@@ -100,7 +100,6 @@ def test_counts_unique_parameters_per_argument_and_env_value():
         env={"HOST": "{host}", "TOKEN": "{token}"},
     )
 
-    # Counts unique parameter names in each separate value.
     assert P.get_argv_env_kernel_variables(spec) == 4
 
 
@@ -108,12 +107,6 @@ def test_count_is_zero_when_no_custom_parameters():
     spec = make_spec(argv=["python", "{connection_file}"], env={})
 
     assert P.get_argv_env_kernel_variables(spec) == 0
-
-
-# --------------------------------------------------
-# substitute_parameters / format methods
-# --------------------------------------------------
-
 
 def test_substitute_resolved_parameters_only():
     assert (
@@ -159,12 +152,6 @@ def test_parameter_properties_handles_missing_metadata():
     spec = make_spec(metadata={})
 
     assert P._parameter_properties(spec) == {}
-
-
-# --------------------------------------------------
-# replace_by_default
-# --------------------------------------------------
-
 
 def test_replace_by_default_updates_argv_and_env():
     spec = make_spec(
@@ -231,7 +218,6 @@ def test_kernel_without_parameter_metadata_is_insecure_with_placeholder():
     )
 
     assert P.check_kernel_is_secure(spec) is False
-
 
 def test_kernel_with_matching_enum_parameter_is_secure():
     spec = make_spec(
