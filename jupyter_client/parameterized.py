@@ -1,10 +1,13 @@
+# Copyright (c) Jupyter Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 from __future__ import annotations
 
 import copy
 import re
 import typing as t
 
-from jupyter_client.kernelspec import KernelSpec
+from . import kernelspec
 
 _PLACEHOLDER = re.compile(r"\{([A-Za-z0-9_]+)\}")
 _CONNECTION_FILE = "connection_file"
@@ -14,11 +17,11 @@ class ParameterizedKernelSpec:
     """Shared helpers for parameterized kernelspecs."""
 
     @classmethod
-    def get_default_custom_kernel_specs_value(cls, kspec: t.Any) -> dict[str, t.Any]:
+    def get_default_custom_kernel_specs_value(cls, kspec: kernelspec.KernelSpec) -> dict[str, t.Any]:
         """Get default values of custom kernel specs."""
 
         properties = cls._parameter_properties(kspec)
-        if not isinstance(properties, dict):
+        if not properties:
             return {}
 
         return {
@@ -38,22 +41,27 @@ class ParameterizedKernelSpec:
     @classmethod
     def has_custom_parameter(cls, value: t.Any) -> bool:
         return bool(cls.find_parameters(value))
+    
 
     @classmethod
-    def get_argv_env_kernel_variables(cls, kspec: t.Any) -> int:
-        """Returns the total count of custom kernel variables parameters in argv and env."""
-        total_variables_count = 0
+    def get_argv_env_kernel_variable_names(cls, kspec):
+        names = set()
 
         for value in getattr(kspec, "argv", None) or []:
-            total_variables_count += len(cls.find_parameters(value))
-        for value in (getattr(kspec, "env", None) or {}).values():
-            total_variables_count += len(cls.find_parameters(value))
+            names.update(cls.find_parameters(value))
 
-        return total_variables_count
+        for value in (getattr(kspec, "env", None) or {}).values():
+            names.update(cls.find_parameters(value))
+
+        return names
+
+    @classmethod
+    def get_argv_env_kernel_variables(cls, kspec: kernelspec.KernelSpec) -> int:
+        return len(cls.get_argv_env_kernel_variable_names(kspec))
 
     @staticmethod
     def substitute_parameters(
-        value: str,
+        value: t.Any,
         values: dict[str, t.Any],
     ) -> str:
         """Substitute only values that were explicitly resolved."""
@@ -67,7 +75,7 @@ class ParameterizedKernelSpec:
     @classmethod
     def format_kernel_cmd(
         cls,
-        cmd: list[str],
+        cmd: t.List[t.Any],
         values: dict[str, t.Any],
     ) -> list[str]:
         return [cls.substitute_parameters(arg, values) for arg in cmd]
@@ -75,13 +83,13 @@ class ParameterizedKernelSpec:
     @classmethod
     def format_kernel_env(
         cls,
-        env: dict[str, str],
+        env: t.List[t.Any],
         values: dict[str, t.Any],
     ) -> dict[str, str]:
         return {key: cls.substitute_parameters(value, values) for key, value in env.items()}
 
     @staticmethod
-    def _parameter_properties(kspec: t.Any) -> dict[str, t.Any]:
+    def _parameter_properties(kspec: kernelspec.KernelSpec) -> dict[str, t.Any]:
         metadata = getattr(kspec, "metadata", None) or {}
         parameters = metadata.get("parameters", {})
         properties = parameters.get("properties", {})
@@ -119,12 +127,12 @@ class ParameterizedKernelSpec:
         return counter_secure_kernel_variables
 
     @classmethod
-    def check_kernel_is_secure(cls, kspec: t.Any) -> bool:
+    def check_kernel_is_secure(cls, kspec: kernelspec.KernelSpec) -> bool:
         is_secure = False
         total_sum_kernel_variables = cls.get_argv_env_kernel_variables(kspec)
 
         properties = cls._parameter_properties(kspec)
-        if not isinstance(properties, dict):
+        if not properties:
             # check if there are kernel variables even metadata.parameters are empty
             if total_sum_kernel_variables > 0:
                 is_secure = False
@@ -146,7 +154,7 @@ class ParameterizedKernelSpec:
     @classmethod
     def replace_by_default(
         cls,
-        kspec: t.Any,
+        kspec: kernelspec.KernelSpec,
         kernel_variable: str,
         default_value: t.Any,
     ) -> t.Any:
@@ -166,15 +174,15 @@ class ParameterizedKernelSpec:
         return result
 
     @classmethod
-    def check_kernel_custom_all_default_values(cls, kspec: KernelSpec):
+    def check_kernel_custom_all_default_values(cls, kspec:kernelspec.KernelSpec):
         assert kspec is not None
         properties = cls._parameter_properties(kspec)
-        if isinstance(properties, dict):
+        if properties:
             has_default = True
 
-            new_kspec = {}
+            new_kspec = copy.deepcopy(kspec)
             for property_key, property_value in properties.items():
-                if "default" in property_value:
+                if isinstance(property_value, dict) and "default" in property_value:
                     new_kspec = cls.replace_by_default(
                         kspec, property_key, property_value["default"]
                     )
@@ -198,7 +206,7 @@ class ParameterizedKernelSpec:
     @classmethod
     def check_parameterized_kernel(
         cls,
-        kspec: t.Any,
+        kspec: kernelspec.KernelSpec,
         allow_insecure_kernelspec_params: bool = False,
     ) -> t.Any | None:
         """Apply the security policy and default-value fallback."""
@@ -223,10 +231,12 @@ class ParameterizedKernelSpec:
             return None
 
     @classmethod
-    def get_custom_kernel_spec_value(cls, launch_args, custom_kernel_default_value):
+    def get_custom_kernel_spec_value(cls, launch_args:t.Dict[str, t.Any], custom_kernel_default_value: dict[str, t.Any]):
         custom_kernel_dict = {}
         if "custom_kernel_specs" in launch_args:
-            custom_kernel_dict = launch_args["custom_kernel_specs"]
+            custom_kernel_specs = launch_args["custom_kernel_specs"]
+            custom_kernel_dict = custom_kernel_specs.copy() if isinstance(custom_kernel_specs, dict) else {}
+            
             # check is custom kernel variables are full if not then we should take default ones
             if custom_kernel_default_value:
                 for key, value in custom_kernel_default_value.items():
@@ -234,7 +244,7 @@ class ParameterizedKernelSpec:
                         custom_kernel_dict[key] = value
         elif custom_kernel_default_value:
             # if not but default values are present into a kernel.json file then we have to take them
-            custom_kernel_dict = cls.custom_kernel_default_value
+            custom_kernel_dict = custom_kernel_default_value.copy()
         return custom_kernel_dict
 
     @classmethod
@@ -245,31 +255,45 @@ class ParameterizedKernelSpec:
         """
         if isinstance(kernel_parameters, list):
             clean_parameters = [
-                item for item in kernel_parameters if not cls.has_custom_parameter(item)
+                item for item in kernel_parameters if item != "" and not cls.has_custom_parameter(item)
             ]
+
+            return clean_parameters if clean_parameters else kernel_parameters
         elif isinstance(kernel_parameters, dict):
             clean_parameters = {
                 key: value
                 for key, value in kernel_parameters.items()
-                if not cls.has_custom_parameter(value)
+                if value != "" and not cls.has_custom_parameter(value)
             }
+
+            return clean_parameters if clean_parameters else kernel_parameters
         else:
-            if isinstance(kernel_parameters, str):
-                if cls.has_custom_parameter(kernel_parameters):
+             if isinstance(kernel_parameters, str):
+                if kernel_parameters == "" or cls.has_custom_parameter(kernel_parameters):
                     return ""
                 return kernel_parameters
-
-        if not clean_parameters:
-            return kernel_parameters
-
-        return clean_parameters
-
+        
+        
+        return kernel_parameters
+    
     @classmethod
     def update_custom_env_parameters(
-        cls, launch_args, custom_kernel_default_value, env: t.Dict[str, str]
+        cls, launch_args:t.Dict[str, t.Any], custom_kernel_default_value:dict[str, t.Any], env: t.Dict[str, str]
     ) -> t.Dict[str, str]:
         custom_kernel_dict = cls.get_custom_kernel_spec_value(
             launch_args, custom_kernel_default_value
         )
         newEnv = cls.format_kernel_env(env, custom_kernel_dict)
         return cls.clear_custom_kernel_parameters(newEnv)
+
+    @classmethod
+    def update_custom_arg_parameters(
+        cls, kpecs, cmd: t.List[t.Any], kwargs: t.Dict[str, t.Any]
+    ) -> t.List[t.Any]:
+        custom_kernel_default_value = cls.get_default_custom_kernel_specs_value(kpecs)
+        
+        custom_kernel_dict = cls.get_custom_kernel_spec_value(
+            kwargs, custom_kernel_default_value
+        )
+        newArgs = cls.format_kernel_cmd(cmd, custom_kernel_dict)
+        return newArgs

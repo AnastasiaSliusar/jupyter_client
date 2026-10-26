@@ -14,7 +14,7 @@ import zmq
 from ..connect import KernelConnectionInfo, LocalPortCache
 from ..launcher import launch_kernel
 from ..localinterfaces import is_local_ip, local_ips
-from .parameterized import ParameterizedKernelSpec
+from ..parameterized import ParameterizedKernelSpec
 from .provisioner_base import KernelProvisionerBase
 
 
@@ -256,6 +256,7 @@ class LocalProvisioner(KernelProvisionerBase):
         else:
             extra_arguments = kwargs.pop("extra_arguments", [])
             kernel_cmd = self.kernel_spec.argv + extra_arguments
+            kernel_cmd = ParameterizedKernelSpec.update_custom_arg_parameters(self.kernel_spec,kernel_cmd, kwargs)
 
         kernel_cmd = ParameterizedKernelSpec.clear_custom_kernel_parameters(kernel_cmd)
 
