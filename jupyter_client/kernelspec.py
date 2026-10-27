@@ -245,7 +245,7 @@ class KernelSpecManager(LoggingConfigurable):
     def allow_insecure_kernelspec_params(self, allow_insecure_kernelspec_params: bool) -> None:
         self._allow_insecure_kernelspec_params = allow_insecure_kernelspec_params
 
-    def _get_kernel_spec_by_name(self, kernel_name: str, resource_dir: str) -> KernelSpec:
+    def _get_kernel_spec_by_name(self, kernel_name: str, resource_dir: str) -> KernelSpec | None:
         """Returns a :class:`KernelSpec` instance for a given kernel_name
         and resource_dir.
         """
@@ -271,7 +271,7 @@ class KernelSpecManager(LoggingConfigurable):
         )
 
         if kspec is None:
-            raise NoSuchKernel(kernel_name)
+            return None
         else:
             return kspec
 

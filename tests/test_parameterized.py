@@ -325,7 +325,11 @@ def test_insecure_kernel_is_rejected_without_defaults():
         metadata={"parameters": {"properties": {"host": {"type": "string"}}}},
     )
 
-    assert P.check_parameterized_kernel(spec) is None
+    sanitized_spec = P.check_parameterized_kernel(spec)
+    assert sanitized_spec is not None
+    assert "--host={host}" not in sanitized_spec.argv
+    assert sanitized_spec.argv == ["python"]
+    assert sanitized_spec.metadata.get("is_secure") is False
 
 
 def test_allow_insecure_kernel_returns_spec():

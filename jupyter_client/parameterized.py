@@ -103,31 +103,36 @@ class ParameterizedKernelSpec:
     def get_count_secure_kernel_variables(
         cls, obj: dict[str, t.Any], counter_secure_kernel_variables: int = 0
     ) -> int:
-        """Count secured custom kernel variables."""
-        is_secure = True
-        if "properties" in obj:
-            propetries = obj["properties"].items()
-            if len(propetries) > 0:
-                for _property_key, property_value in propetries:
-                    if (
-                        property_value.get("type") == "string"
-                        or property_value.get("type") == "null"
-                    ):
-                        if property_value.get("enum"):
-                            counter_secure_kernel_variables = counter_secure_kernel_variables + 1
-                        else:
-                            is_secure = False
-                    elif property_value.get("type") == "array":
-                        is_secure = False
-                    elif property_value.get("enum"):
-                        counter_secure_kernel_variables = counter_secure_kernel_variables + 1
-                    elif property_value.get("type") == "object":
-                        counter_secure_kernel_variables = cls.get_count_secure_kernel_variables(
-                            obj=obj, counter_secure_kernel_variables=counter_secure_kernel_variables
-                        )
+        """Count secured custom kernel variables recursively."""
+        properties = obj.get("properties")
+        if not isinstance(properties, dict):
+            return counter_secure_kernel_variables  #
 
-        if is_secure is False:
-            counter_secure_kernel_variables = 0
+        for _property_key, property_value in properties.items():
+            if not isinstance(property_value, dict):
+                continue
+
+            prop_type = property_value.get("type")
+
+            if prop_type == "array":
+                return 0
+
+            if prop_type in ("string", "null"):
+                if property_value.get("enum"):
+                    counter_secure_kernel_variables += 1
+                else:
+                    return 0
+
+            elif prop_type == "object":
+                counter_secure_kernel_variables = cls.get_count_secure_kernel_variables(
+                    obj=property_value,
+                    counter_secure_kernel_variables=counter_secure_kernel_variables,
+                )
+                if counter_secure_kernel_variables == 0:
+                    return 0
+
+            elif property_value.get("enum"):
+                counter_secure_kernel_variables += 1
 
         return counter_secure_kernel_variables
 
@@ -149,7 +154,10 @@ class ParameterizedKernelSpec:
             counter_secure_kernel_variables = cls.get_count_secure_kernel_variables(
                 obj=kspec.metadata["parameters"], counter_secure_kernel_variables=0
             )
-            if total_sum_kernel_variables > 0:
+
+            if counter_secure_kernel_variables == 0:
+                is_secure = False
+            elif total_sum_kernel_variables > 0:
                 if counter_secure_kernel_variables == total_sum_kernel_variables:
                     is_secure = True
                 else:
@@ -194,7 +202,7 @@ class ParameterizedKernelSpec:
             for property_key, property_value in properties.items():
                 if isinstance(property_value, dict) and "default" in property_value:
                     new_kspec = cls.replace_by_default(
-                        kspec, property_key, property_value["default"]
+                        new_kspec, property_key, property_value["default"]
                     )
                 else:
                     has_default = False
@@ -218,8 +226,9 @@ class ParameterizedKernelSpec:
         cls,
         kspec: kernelspec.KernelSpec,
         allow_insecure_kernelspec_params: bool = False,
-    ) -> t.Any | None:
+    ) -> kernelspec.KernelSpec:
         """Apply the security policy and default-value fallback."""
+        # check whether there are custom kernel spec variables and if so whether they have configuration and its configuration is safe
         is_secure = cls.check_kernel_is_secure(kspec)
 
         result = copy.deepcopy(kspec)
@@ -227,18 +236,26 @@ class ParameterizedKernelSpec:
         metadata["is_secure"] = is_secure
         result.metadata = metadata
 
+        # Case 1: Clean kernel or unsafe parameters explicitly permitted
         if is_secure or allow_insecure_kernelspec_params:
             return result
 
+        # Case 2: Insecure parameters found -> Fall back to factory defaults
         fallback = cls.check_kernel_custom_all_default_values(result)
+        fallback_spec = fallback["kspec"]
+        fallback_metadata = dict(getattr(fallback_spec, "metadata", None) or {})
+        fallback_metadata["is_secure"] = False
+        fallback_spec.metadata = fallback_metadata
+
         if fallback["all_have_default"]:
-            fallback_spec = fallback["kspec"]
-            fallback_metadata = dict(getattr(fallback_spec, "metadata", None) or {})
-            fallback_metadata["is_secure"] = False
-            fallback_spec.metadata = fallback_metadata
             return fallback_spec
         else:
-            return None
+            # Case 3: Broken/incomplete defaults -> Emergency purge remaining brackets
+            if hasattr(fallback_spec, "argv") and fallback_spec.argv:
+                fallback_spec.argv = cls.clear_custom_kernel_parameters(fallback_spec.argv)
+            if hasattr(fallback_spec, "env") and fallback_spec.env:
+                fallback_spec.env = cls.clear_custom_kernel_parameters(fallback_spec.env)
+            return fallback_spec
 
     @classmethod
     def get_custom_kernel_spec_value(

@@ -388,12 +388,14 @@ class KernelManager(ConnectionFileMixin):
                     if key in saved_env and key not in env:
                         env[key] = saved_env[key]
 
-            # check whether env has custom kernel spec variables
-            env = ParameterizedKernelSpec.update_custom_env_parameters(
-                self._launch_args, self.custom_kernel_default_value, env=env
-            )
+                env = ParameterizedKernelSpec.update_custom_env_parameters(
+                    launch_args, self.custom_kernel_default_value, env=env
+                )
 
-            self._launch_args["env"].update(env)
+            if isinstance(saved_env, dict):
+                saved_env.update(env)
+            else:
+                launch_args["env"] = dict(env)
 
     def set_default_custom_kernel_specs_value(self) -> None:
         assert self.kernel_spec is not None
@@ -521,15 +523,19 @@ class KernelManager(ConnectionFileMixin):
         kw = await self.provisioner.pre_launch(**kw)
         # update env
         if "env" in kw:
-            kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(
-                self._launch_args, self.custom_kernel_default_value, env=kw["env"]
-            )
-            launch_env = (
-                self._launch_args.get("env") if isinstance(self._launch_args, dict) else None
-            )
+            launch_args = self._launch_args
+            if isinstance(launch_args, dict):
+                custom_kernel_dict = launch_args.get("custom_kernel_specs")
+                if isinstance(custom_kernel_dict, dict):
+                    kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(
+                        self._launch_args, self.custom_kernel_default_value, env=kw["env"]
+                    )
 
-            if isinstance(launch_env, dict):
-                launch_env.update(kw["env"])
+                saved_env = launch_args.get("env")
+                if isinstance(saved_env, dict):
+                    saved_env.update(kw["env"])
+                else:
+                    launch_args["env"] = dict(kw["env"])
 
         kernel_cmd = kw.pop("cmd")
         if "custom_kernel_specs" in kw:
