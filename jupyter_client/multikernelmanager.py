@@ -254,24 +254,28 @@ class MultiKernelManager(LoggingConfigurable):
         """
         return getattr(self, "use_pending_kernels", False)
 
-    def validate(self, string) -> str:
-        sanitazed_string = re.sub(r"[;&|$#]", "", string)
-        match = re.match(r"'", sanitazed_string)
-        if match:
-            sanitazed_string = "'" + re.sub(r"'", "'''", sanitazed_string) + "'"
-        return sanitazed_string
+    def validate(self, string: str) -> str:
+        sanitized_string = re.sub(r"[;&|$#]", "", string)
+        if "'" in sanitized_string:
+            sanitized_string = "'" + re.sub(r"'", "'''", sanitized_string) + "'"
+        return sanitized_string
 
-    def validate_kernel_parameters(self, kwargs: t.Any) -> None:
+    def validate_kernel_parameters(self, kwargs: t.Any) -> t.Any:
+        args: t.Dict[str, t.Any] = {}
         if "custom_kernel_specs" in kwargs:
-            custom_kernel_specs = kwargs.get("custom_kernel_specs")
-            if custom_kernel_specs is not None:
+            custom_kernel_specs = kwargs.get("custom_kernel_specs", {})
+            if custom_kernel_specs:
+                cleaned_specs: t.Dict[str, t.Any] = {}
                 for custom_kernel_spec, custom_kernel_spec_value in kwargs[
                     "custom_kernel_specs"
                 ].items():
-                    sanitazed_string = self.validate(custom_kernel_spec_value)
-                    if sanitazed_string != "":
-                        kwargs["custom_kernel_specs"][custom_kernel_spec] = sanitazed_string
-        return kwargs
+                    if isinstance(custom_kernel_spec_value, str):
+                        sanitazed_string = self.validate(custom_kernel_spec_value)
+                        if sanitazed_string != "":
+                            cleaned_specs[custom_kernel_spec] = sanitazed_string
+                if cleaned_specs:
+                    args["custom_kernel_specs"] = cleaned_specs
+        return args
 
     async def _async_start_kernel(self, *, kernel_name: str | None = None, **kwargs: t.Any) -> str:
         """Start a new kernel.

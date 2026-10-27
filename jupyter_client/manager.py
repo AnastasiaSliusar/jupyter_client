@@ -378,29 +378,24 @@ class KernelManager(ConnectionFileMixin):
         .. version-added: 8.5
         """
 
-        # Mypy think this is unreachable as it see _launch_args as Dict, not t.Dict
-        if (
-            isinstance(self._launch_args, dict)
-            and "env" in self._launch_args
-            and isinstance(self._launch_args["env"], dict)  # type: ignore [unreachable]
-        ):
-            # if self._launch_args["env"] has custom kernel variable for env but env does not have then we have to fill env with it
-            if "custom_kernel_specs" in self._launch_args:
-                saved_env = self._launch_args.get("env", {})
-                custom_kernel_dict = self._launch_args["custom_kernel_specs"]
-                if isinstance(custom_kernel_dict, dict):
-                    for key, _value in custom_kernel_dict.items():
-                        if key in saved_env and key not in env:
-                            env[key] = saved_env[key]
+        launch_args = self._launch_args
+        if isinstance(launch_args, dict):
+            saved_env = launch_args.get("env")
+            custom_kernel_dict = launch_args.get("custom_kernel_specs")
+
+            if isinstance(saved_env, dict) and isinstance(custom_kernel_dict, dict):
+                for key, _value in custom_kernel_dict.items():
+                    if key in saved_env and key not in env:
+                        env[key] = saved_env[key]
 
             # check whether env has custom kernel spec variables
             env = ParameterizedKernelSpec.update_custom_env_parameters(
                 self._launch_args, self.custom_kernel_default_value, env=env
             )
 
-            self._launch_args["env"].update(env)  # type: ignore [unreachable]
+            self._launch_args["env"].update(env)
 
-    def set_default_custom_kernel_specs_value(self):
+    def set_default_custom_kernel_specs_value(self) -> None:
         assert self.kernel_spec is not None
         self.custom_kernel_default_value = (
             ParameterizedKernelSpec.get_default_custom_kernel_specs_value(self.kernel_spec)
@@ -434,9 +429,11 @@ class KernelManager(ConnectionFileMixin):
             "prefix": sys.prefix,
         }
 
+        launch_args = self._launch_args if isinstance(self._launch_args, dict) else {}
+
         # Updating ns if there are custom kernel specs variables
         custom_kernel_dict = ParameterizedKernelSpec.get_custom_kernel_spec_value(
-            self._launch_args, self.custom_kernel_default_value
+            launch_args, self.custom_kernel_default_value
         )
 
         if isinstance(custom_kernel_dict, dict) and len(custom_kernel_dict) > 0:
@@ -527,7 +524,13 @@ class KernelManager(ConnectionFileMixin):
             kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(
                 self._launch_args, self.custom_kernel_default_value, env=kw["env"]
             )
-            self._launch_args["env"].update(kw["env"])
+            launch_env = (
+                self._launch_args.get("env") if isinstance(self._launch_args, dict) else None
+            )
+
+            if isinstance(launch_env, dict):
+                launch_env.update(kw["env"])
+
         kernel_cmd = kw.pop("cmd")
         if "custom_kernel_specs" in kw:
             del kw["custom_kernel_specs"]

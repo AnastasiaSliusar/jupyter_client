@@ -242,7 +242,7 @@ class KernelSpecManager(LoggingConfigurable):
         return d
         # TODO: Caching?
 
-    def allow_insecure_kernelspec_params(self, allow_insecure_kernelspec_params):
+    def allow_insecure_kernelspec_params(self, allow_insecure_kernelspec_params: bool) -> None:
         self._allow_insecure_kernelspec_params = allow_insecure_kernelspec_params
 
     def _get_kernel_spec_by_name(self, kernel_name: str, resource_dir: str) -> KernelSpec:
@@ -270,10 +270,10 @@ class KernelSpecManager(LoggingConfigurable):
             kspec, self._allow_insecure_kernelspec_params
         )
 
-        if kspec is not None:
-            return kspec
+        if kspec is None:
+            raise NoSuchKernel(kernel_name)
         else:
-            return None
+            return kspec
 
     def _find_spec_directory(self, kernel_name: str) -> str | None:
         """Find the resource directory of a named kernel spec"""
