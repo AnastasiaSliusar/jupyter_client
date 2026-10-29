@@ -261,9 +261,9 @@ class MultiKernelManager(LoggingConfigurable):
         return sanitized_string
 
     def validate_kernel_parameters(self, kwargs: t.Any) -> t.Any:
-        args: t.Dict[str, t.Any] = {}
-        if "custom_kernel_specs" in kwargs:
-            custom_kernel_specs = kwargs.get("custom_kernel_specs", {})
+        args: t.Dict[str, t.Any] = kwargs.copy()
+        if "custom_kernel_specs" in args:
+            custom_kernel_specs = args.get("custom_kernel_specs", {})
             if custom_kernel_specs:
                 cleaned_specs: t.Dict[str, t.Any] = {}
                 for custom_kernel_spec, custom_kernel_spec_value in kwargs[

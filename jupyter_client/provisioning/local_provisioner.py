@@ -261,7 +261,6 @@ class LocalProvisioner(KernelProvisionerBase):
             )
 
         kernel_cmd = ParameterizedKernelSpec.clear_custom_kernel_parameters(kernel_cmd)
-
         kwargs.pop("custom_kernel_specs", None)
         return await super().pre_launch(cmd=kernel_cmd, **kwargs)
 
