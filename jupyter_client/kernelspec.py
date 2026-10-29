@@ -15,6 +15,7 @@ from jupyter_core.paths import SYSTEM_JUPYTER_PATH, jupyter_data_dir, jupyter_pa
 from traitlets import Bool, CaselessStrEnum, Dict, HasTraits, List, Set, Type, Unicode, observe
 from traitlets.config import LoggingConfigurable
 
+from .parameterized import ParameterizedKernelSpec
 from .provisioning import KernelProvisionerFactory as KPF  # noqa
 
 pjoin = os.path.join
@@ -179,6 +180,8 @@ class KernelSpecManager(LoggingConfigurable):
         "whitelist": ("allowed_kernelspecs", "7.0"),
     }
 
+    _allow_insecure_kernelspec_params = False
+
     # Method copied from
     # https://github.com/jupyterhub/jupyterhub/blob/d1a85e53dccfc7b1dd81b0c1985d158cc6b61820/jupyterhub/auth.py#L143-L161
     @observe(*list(_deprecated_aliases))
@@ -239,7 +242,10 @@ class KernelSpecManager(LoggingConfigurable):
         return d
         # TODO: Caching?
 
-    def _get_kernel_spec_by_name(self, kernel_name: str, resource_dir: str) -> KernelSpec:
+    def allow_insecure_kernelspec_params(self, allow_insecure_kernelspec_params: bool) -> None:
+        self._allow_insecure_kernelspec_params = allow_insecure_kernelspec_params
+
+    def _get_kernel_spec_by_name(self, kernel_name: str, resource_dir: str) -> KernelSpec | None:
         """Returns a :class:`KernelSpec` instance for a given kernel_name
         and resource_dir.
         """
@@ -260,7 +266,14 @@ class KernelSpecManager(LoggingConfigurable):
         if not KPF.instance(parent=self.parent).is_provisioner_available(kspec):
             raise NoSuchKernel(kernel_name)
 
-        return kspec
+        kspec = ParameterizedKernelSpec.check_parameterized_kernel(
+            kspec, self._allow_insecure_kernelspec_params
+        )
+
+        if kspec is None:
+            return None
+        else:
+            return kspec
 
     def _find_spec_directory(self, kernel_name: str) -> str | None:
         """Find the resource directory of a named kernel spec"""
@@ -320,8 +333,8 @@ class KernelSpecManager(LoggingConfigurable):
                     # which may have overridden find_kernel_specs
                     # and get_kernel_spec, but not the newer get_all_specs
                     spec = self.get_kernel_spec(kname)
-
-                res[kname] = {"resource_dir": resource_dir, "spec": spec.to_dict()}
+                if spec is not None:
+                    res[kname] = {"resource_dir": resource_dir, "spec": spec.to_dict()}
             except NoSuchKernel:
                 pass  # The appropriate warning has already been logged
             except Exception:
