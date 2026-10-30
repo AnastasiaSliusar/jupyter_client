@@ -378,24 +378,28 @@ class KernelManager(ConnectionFileMixin):
         .. version-added: 8.5
         """
 
-        launch_args = self._launch_args
-        if isinstance(launch_args, dict):
-            saved_env = launch_args.get("env")
-            custom_kernel_dict = launch_args.get("custom_kernel_specs")
+        # Mypy think this is unreachable as it see _launch_args as Dict, not t.Dict
+        if (
+            isinstance(self._launch_args, dict)
+            and "env" in self._launch_args
+            and isinstance(self._launch_args["env"], dict)  # type: ignore [unreachable]
+        ):
+            saved_env = self._launch_args["env"]  # type: ignore [unreachable]
+            custom_kernel_dict = self._launch_args.get("custom_kernel_specs")
 
-            if isinstance(saved_env, dict) and isinstance(custom_kernel_dict, dict):
+            if isinstance(custom_kernel_dict, dict):
                 for key, _value in custom_kernel_dict.items():
                     if key in saved_env and key not in env:
                         env[key] = saved_env[key]
 
                 env = ParameterizedKernelSpec.update_custom_env_parameters(
-                    launch_args, self.custom_kernel_default_value, env=env
+                    self._launch_args, self.custom_kernel_default_value, env=env
                 )
 
             if isinstance(saved_env, dict):
                 saved_env.update(env)
             else:
-                launch_args["env"] = dict(env)
+                self._launch_args["env"] = dict(env)
 
     def set_default_custom_kernel_specs_value(self) -> None:
         assert self.kernel_spec is not None
@@ -438,7 +442,7 @@ class KernelManager(ConnectionFileMixin):
             launch_args, self.custom_kernel_default_value
         )
 
-        if isinstance(custom_kernel_dict, dict) and len(custom_kernel_dict) > 0:
+        if isinstance(custom_kernel_dict, dict):
             for custom_kernel_spec_key, custom_kernel_spec_value in custom_kernel_dict.items():
                 ns[custom_kernel_spec_key] = custom_kernel_spec_value
 
@@ -522,20 +526,20 @@ class KernelManager(ConnectionFileMixin):
             )
         kw = await self.provisioner.pre_launch(**kw)
         # update env
-        if "env" in kw:
-            launch_args = self._launch_args
-            if isinstance(launch_args, dict):
-                custom_kernel_dict = launch_args.get("custom_kernel_specs")
-                if isinstance(custom_kernel_dict, dict):
-                    kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(
-                        self._launch_args, self.custom_kernel_default_value, env=kw["env"]
-                    )
+        if (
+            "env" in kw
+            and "custom_kernel_specs" in self._launch_args
+            and isinstance(self._launch_args["custom_kernel_specs"], dict)  # type: ignore [unreachable]
+        ):
+            kw["env"] = ParameterizedKernelSpec.update_custom_env_parameters(  # type: ignore [unreachable]
+                self._launch_args, self.custom_kernel_default_value, env=kw["env"]
+            )
 
-                saved_env = launch_args.get("env")
-                if isinstance(saved_env, dict):
-                    saved_env.update(kw["env"])
-                else:
-                    launch_args["env"] = dict(kw["env"])
+            saved_env = self._launch_args.get("env")
+            if isinstance(saved_env, dict):
+                saved_env.update(kw["env"])
+            else:
+                self._launch_args["env"] = dict(kw["env"])
 
         kernel_cmd = kw.pop("cmd")
         if "custom_kernel_specs" in kw:
